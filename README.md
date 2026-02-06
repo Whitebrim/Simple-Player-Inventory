@@ -1,3 +1,20 @@
+# Как поиграть
+
+## Windows
+[Скачать Windows сборку](https://github.com/Whitebrim/Simple-Player-Inventory/releases/latest)  
+
+## Unity Editor
+Для запуска проекта в Unity нужно установить Unity 6000.3.7f1.  
+В проекте одна сцена Main, она же и является bootstrap сценой, запускать проект нужно с нее.
+
+# Видео
+https://youtu.be/29oa7abcqjo
+
+# Информация
+Проект писался с использованием Claude Opus 4.6.  
+Было потрачено приблизательно 4 часа.
+
+<br><br><br><br><br><br><br><br><br><br>
 # ТЗ:
 
 ## Требования:
