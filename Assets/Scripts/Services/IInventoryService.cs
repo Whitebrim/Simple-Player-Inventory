@@ -12,5 +12,6 @@ namespace Game.Services
         MoveResult MoveSlot(int fromIndex, int toIndex, int amount = -1);
         ItemData RemoveFromSlot(int slotIndex, int amount = -1);
         InventorySlot GetSlot(int index);
+        void Sort();
     }
 }

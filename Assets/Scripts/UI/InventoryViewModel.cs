@@ -79,6 +79,12 @@ namespace Game.UI
                 DropRequested?.Invoke(data);
         }
 
+        public void RequestSort()
+        {
+            DeselectSlot();
+            _inventory.Sort();
+        }
+
         public void SelectSlot(int index)
         {
             if (index == _selectedSlotIndex)

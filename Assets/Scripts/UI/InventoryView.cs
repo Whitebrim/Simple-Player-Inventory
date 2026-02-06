@@ -12,6 +12,7 @@ namespace Game.UI
 
         private readonly InventoryViewModel _viewModel;
         private readonly VisualElement _root;
+        private readonly VisualElement _layout;
         private readonly VisualElement _panel;
         private readonly VisualElement _gridContainer;
         private readonly VisualElement _detailPanel;
@@ -33,6 +34,10 @@ namespace Game.UI
             _detailName = _root.Q<Label>("detail-name");
             _detailAmount = _root.Q<Label>("detail-amount");
 
+            var layout = _root.Q("inventory-layout");
+            _layout = layout;
+            var sortButton = _root.Q<Button>("sort-button");
+
             int slotCount = viewModel.SlotCount;
             _slotElements = new VisualElement[slotCount];
             _slotIcons = new VisualElement[slotCount];
@@ -41,6 +46,8 @@ namespace Game.UI
             BuildSlots(slotCount);
             SetupDragDrop();
             SetupRightClick(slotCount);
+
+            sortButton.clicked += _viewModel.RequestSort;
 
             _viewModel.SlotUpdated += UpdateSlot;
             _viewModel.VisibilityChanged += OnVisibilityChanged;
@@ -154,7 +161,7 @@ namespace Game.UI
 
         private void SetVisible(bool visible)
         {
-            _panel.style.display = visible ? DisplayStyle.Flex : DisplayStyle.None;
+            _layout.style.display = visible ? DisplayStyle.Flex : DisplayStyle.None;
         }
 
         private void OnDetailShown(SlotViewData data)

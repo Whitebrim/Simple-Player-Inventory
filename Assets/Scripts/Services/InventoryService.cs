@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using Game.Data;
 using UnityEngine;
 
@@ -145,6 +146,49 @@ namespace Game.Services
 
             SlotChanged?.Invoke(slotIndex);
             return removed;
+        }
+
+        public void Sort()
+        {
+            var consolidated = new Dictionary<string, int>();
+
+            foreach (var slot in _slots)
+            {
+                if (slot.IsEmpty)
+                    continue;
+
+                if (consolidated.ContainsKey(slot.ItemId))
+                    consolidated[slot.ItemId] += slot.Amount;
+                else
+                    consolidated[slot.ItemId] = slot.Amount;
+
+                slot.Clear();
+            }
+
+            var sorted = new List<string>(consolidated.Keys);
+            sorted.Sort(StringComparer.Ordinal);
+
+            int slotIndex = 0;
+
+            foreach (string itemId in sorted)
+            {
+                var definition = _database.GetById(itemId);
+                int remaining = consolidated[itemId];
+
+                while (remaining > 0 && slotIndex < _slots.Length)
+                {
+                    int toPlace = definition.Stackable
+                        ? Mathf.Min(remaining, definition.MaxStack)
+                        : 1;
+
+                    _slots[slotIndex].Set(new ItemData(itemId, toPlace));
+                    remaining -= toPlace;
+                    slotIndex++;
+                }
+            }
+
+            for (int i = 0; i < _slots.Length; i++)
+                SlotChanged?.Invoke(i);
         }
 
         private int FindEmptySlot()

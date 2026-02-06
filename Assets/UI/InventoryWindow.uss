@@ -4,6 +4,35 @@
     justify-content: center;
 }
 
+.inventory-layout {
+    flex-direction: row;
+    align-items: flex-start;
+}
+
+.help-panel {
+    background-color: rgba(20, 20, 20, 0.88);
+    padding: 12px 14px;
+    border-radius: 8px;
+    border-width: 2px;
+    border-color: rgb(70, 70, 70);
+    margin-right: 8px;
+    max-width: 180px;
+}
+
+.help-title {
+    font-size: 16px;
+    color: rgb(200, 200, 200);
+    -unity-font-style: bold;
+    margin-bottom: 8px;
+}
+
+.help-line {
+    font-size: 12px;
+    color: rgb(150, 150, 150);
+    margin-bottom: 4px;
+    white-space: normal;
+}
+
 .inventory-panel {
     background-color: rgba(20, 20, 20, 0.92);
     padding: 16px;
@@ -23,7 +52,7 @@
 .grid-container {
     flex-direction: row;
     flex-wrap: wrap;
-    width: 336px;
+    width: 340px;
 }
 
 .slot {
@@ -77,4 +106,29 @@
 .detail-amount {
     font-size: 14px;
     color: rgb(160, 160, 160);
+}
+
+.side-panel {
+    margin-left: 8px;
+    align-items: center;
+}
+
+.sort-button {
+    background-color: rgb(55, 55, 55);
+    color: rgb(200, 200, 200);
+    border-radius: 6px;
+    border-width: 2px;
+    border-color: rgb(70, 70, 70);
+    padding: 8px 16px;
+    font-size: 14px;
+    -unity-font-style: bold;
+}
+
+.sort-button:hover {
+    background-color: rgb(70, 70, 70);
+    border-color: rgb(120, 120, 120);
+}
+
+.sort-button:active {
+    background-color: rgb(40, 40, 40);
 }

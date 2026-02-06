@@ -1,12 +1,25 @@
 <ui:UXML xmlns:ui="UnityEngine.UIElements">
     <Style src="InventoryWindow.uss" />
     <ui:VisualElement name="inventory-root" class="inventory-root">
-        <ui:VisualElement name="inventory-panel" class="inventory-panel">
-            <ui:Label name="inventory-title" text="Inventory" class="inventory-title" />
-            <ui:VisualElement name="grid-container" class="grid-container" />
-            <ui:VisualElement name="detail-panel" class="detail-panel">
-                <ui:Label name="detail-name" class="detail-name" />
-                <ui:Label name="detail-amount" class="detail-amount" />
+        <ui:VisualElement name="inventory-layout" class="inventory-layout">
+            <ui:VisualElement name="help-panel" class="help-panel">
+                <ui:Label text="Controls" class="help-title" />
+                <ui:Label text="LMB Drag — Move item" class="help-line" />
+                <ui:Label text="Shift + Drag — Half stack" class="help-line" />
+                <ui:Label text="Ctrl + Drag — Single item" class="help-line" />
+                <ui:Label text="RMB — Drop item" class="help-line" />
+                <ui:Label text="Drag outside — Drop item" class="help-line" />
+            </ui:VisualElement>
+            <ui:VisualElement name="inventory-panel" class="inventory-panel">
+                <ui:Label name="inventory-title" text="Inventory" class="inventory-title" />
+                <ui:VisualElement name="grid-container" class="grid-container" />
+                <ui:VisualElement name="detail-panel" class="detail-panel">
+                    <ui:Label name="detail-name" class="detail-name" />
+                    <ui:Label name="detail-amount" class="detail-amount" />
+                </ui:VisualElement>
+            </ui:VisualElement>
+            <ui:VisualElement name="side-panel" class="side-panel">
+                <ui:Button name="sort-button" text="Sort" class="sort-button" />
             </ui:VisualElement>
         </ui:VisualElement>
     </ui:VisualElement>
