@@ -1,0 +1,19 @@
+.hint-root {
+    flex-grow: 1;
+    justify-content: flex-end;
+    align-items: center;
+    padding-bottom: 120px;
+}
+
+.hint-container {
+    background-color: rgba(0, 0, 0, 0.75);
+    padding: 10px 24px;
+    border-radius: 6px;
+}
+
+.hint-label {
+    font-size: 18px;
+    color: rgb(240, 240, 240);
+    -unity-text-align: middle-center;
+    -unity-font-style: bold;
+}

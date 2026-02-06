@@ -1,0 +1,9 @@
+<ui:UXML xmlns:ui="UnityEngine.UIElements">
+    <Style src="InventoryWindow.uss" />
+    <ui:VisualElement name="inventory-root" class="inventory-root">
+        <ui:VisualElement name="inventory-panel" class="inventory-panel">
+            <ui:Label name="inventory-title" text="Inventory" class="inventory-title" />
+            <ui:VisualElement name="grid-container" class="grid-container" />
+        </ui:VisualElement>
+    </ui:VisualElement>
+</ui:UXML>

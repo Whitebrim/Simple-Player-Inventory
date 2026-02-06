@@ -1,0 +1,8 @@
+<ui:UXML xmlns:ui="UnityEngine.UIElements">
+    <Style src="InteractionHint.uss" />
+    <ui:VisualElement name="hint-root" class="hint-root">
+        <ui:VisualElement class="hint-container">
+            <ui:Label name="hint-label" class="hint-label" />
+        </ui:VisualElement>
+    </ui:VisualElement>
+</ui:UXML>

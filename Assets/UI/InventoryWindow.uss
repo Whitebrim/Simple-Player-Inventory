@@ -1,0 +1,59 @@
+.inventory-root {
+    flex-grow: 1;
+    align-items: center;
+    justify-content: center;
+}
+
+.inventory-panel {
+    background-color: rgba(20, 20, 20, 0.92);
+    padding: 16px;
+    border-radius: 8px;
+    border-width: 2px;
+    border-color: rgb(70, 70, 70);
+}
+
+.inventory-title {
+    font-size: 22px;
+    color: rgb(210, 210, 210);
+    -unity-text-align: middle-center;
+    margin-bottom: 12px;
+    -unity-font-style: bold;
+}
+
+.grid-container {
+    flex-direction: row;
+    flex-wrap: wrap;
+    width: 336px;
+}
+
+.slot {
+    width: 74px;
+    height: 74px;
+    margin: 5px;
+    background-color: rgb(45, 45, 45);
+    border-radius: 6px;
+    border-width: 1px;
+    border-color: rgb(65, 65, 65);
+    align-items: center;
+    justify-content: center;
+}
+
+.slot:hover {
+    border-color: rgb(120, 120, 120);
+}
+
+.slot-icon {
+    width: 52px;
+    height: 52px;
+    border-radius: 4px;
+}
+
+.slot-amount {
+    position: absolute;
+    right: 4px;
+    bottom: 2px;
+    font-size: 14px;
+    color: rgb(255, 255, 255);
+    -unity-font-style: bold;
+    text-shadow: 1px 1px 2px rgb(0, 0, 0);
+}
