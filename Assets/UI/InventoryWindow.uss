@@ -57,3 +57,24 @@
     -unity-font-style: bold;
     text-shadow: 1px 1px 2px rgb(0, 0, 0);
 }
+
+.detail-panel {
+    margin-top: 10px;
+    padding: 8px 12px;
+    border-top-width: 1px;
+    border-top-color: rgb(60, 60, 60);
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.detail-name {
+    font-size: 16px;
+    color: rgb(220, 220, 220);
+    -unity-font-style: bold;
+}
+
+.detail-amount {
+    font-size: 14px;
+    color: rgb(160, 160, 160);
+}

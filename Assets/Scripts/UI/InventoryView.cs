@@ -1,16 +1,27 @@
+using UnityEngine;
 using UnityEngine.UIElements;
 
 namespace Game.UI
 {
     public class InventoryView
     {
+        private const int GhostSize = 60;
+        private const float GhostOpacity = 0.7f;
+        private const int GhostBorderRadius = 6;
+        private const int GhostLabelFontSize = 14;
+
         private readonly InventoryViewModel _viewModel;
         private readonly VisualElement _root;
         private readonly VisualElement _panel;
         private readonly VisualElement _gridContainer;
+        private readonly VisualElement _detailPanel;
+        private readonly Label _detailName;
+        private readonly Label _detailAmount;
         private readonly VisualElement[] _slotElements;
         private readonly VisualElement[] _slotIcons;
         private readonly Label[] _slotAmounts;
+
+        private DragDropManipulator _manipulator;
 
         public InventoryView(UIDocument document, InventoryViewModel viewModel)
         {
@@ -18,6 +29,9 @@ namespace Game.UI
             _root = document.rootVisualElement;
             _panel = _root.Q("inventory-panel");
             _gridContainer = _root.Q("grid-container");
+            _detailPanel = _root.Q("detail-panel");
+            _detailName = _root.Q<Label>("detail-name");
+            _detailAmount = _root.Q<Label>("detail-amount");
 
             int slotCount = viewModel.SlotCount;
             _slotElements = new VisualElement[slotCount];
@@ -30,7 +44,10 @@ namespace Game.UI
 
             _viewModel.SlotUpdated += UpdateSlot;
             _viewModel.VisibilityChanged += OnVisibilityChanged;
+            _viewModel.DetailShown += OnDetailShown;
+            _viewModel.DetailHidden += OnDetailHidden;
 
+            HideDetail();
             SetVisible(false);
         }
 
@@ -61,11 +78,12 @@ namespace Game.UI
 
         private void SetupDragDrop()
         {
-            var manipulator = new DragDropManipulator(_slotElements, _root, CreateGhostElement);
-            _gridContainer.AddManipulator(manipulator);
+            _manipulator = new DragDropManipulator(_slotElements, _root, _panel, CreateGhostElement);
+            _gridContainer.AddManipulator(_manipulator);
 
-            manipulator.Moved += (from, to) => _viewModel.RequestMove(from, to);
-            manipulator.DroppedOutside += from => _viewModel.RequestDrop(from);
+            _manipulator.Moved += OnSlotMoved;
+            _manipulator.DroppedOutside += OnSlotDroppedOutside;
+            _manipulator.SlotClicked += OnSlotClicked;
         }
 
         private void SetupRightClick(int count)
@@ -75,13 +93,32 @@ namespace Game.UI
                 int index = i;
                 _slotElements[i].RegisterCallback<PointerDownEvent>(evt =>
                 {
-                    if (evt.button == 1)
-                    {
-                        _viewModel.RequestDrop(index);
-                        evt.StopPropagation();
-                    }
+                    if (evt.button != 1)
+                        return;
+
+                    var modifier = ResolveDragModifier(evt);
+                    int amount = _viewModel.GetMoveAmount(index, modifier);
+                    _viewModel.RequestDrop(index, amount);
+                    evt.StopPropagation();
                 });
             }
+        }
+
+        private void OnSlotMoved(int from, int to, DragModifier modifier)
+        {
+            int amount = _viewModel.GetMoveAmount(from, modifier);
+            _viewModel.RequestMove(from, to, amount);
+        }
+
+        private void OnSlotDroppedOutside(int from, DragModifier modifier)
+        {
+            int amount = _viewModel.GetMoveAmount(from, modifier);
+            _viewModel.RequestDrop(from, amount);
+        }
+
+        private void OnSlotClicked(int index)
+        {
+            _viewModel.SelectSlot(index);
         }
 
         private void UpdateSlot(int index, SlotViewData data)
@@ -109,6 +146,9 @@ namespace Game.UI
 
         private void OnVisibilityChanged(bool isOpen)
         {
+            if (!isOpen)
+                _manipulator.CancelDrag();
+
             SetVisible(isOpen);
         }
 
@@ -117,24 +157,67 @@ namespace Game.UI
             _panel.style.display = visible ? DisplayStyle.Flex : DisplayStyle.None;
         }
 
-        private VisualElement CreateGhostElement(int slotIndex)
+        private void OnDetailShown(SlotViewData data)
+        {
+            _detailName.text = data.Name;
+
+            _detailAmount.text = data.Stackable
+                ? $"{data.Amount} / {data.MaxStack}"
+                : string.Empty;
+
+            _detailPanel.style.display = DisplayStyle.Flex;
+        }
+
+        private void OnDetailHidden()
+        {
+            HideDetail();
+        }
+
+        private void HideDetail()
+        {
+            _detailPanel.style.display = DisplayStyle.None;
+        }
+
+        private VisualElement CreateGhostElement(int slotIndex, DragModifier modifier)
         {
             var data = _viewModel.GetSlotData(slotIndex);
 
             if (data.IsEmpty)
                 return null;
 
+            int moveAmount = _viewModel.GetMoveAmount(slotIndex, modifier);
+
             var ghost = new VisualElement();
-            ghost.style.width = 60;
-            ghost.style.height = 60;
+            ghost.style.width = GhostSize;
+            ghost.style.height = GhostSize;
             ghost.style.backgroundColor = data.Color;
-            ghost.style.opacity = 0.7f;
-            ghost.style.borderTopLeftRadius = 6;
-            ghost.style.borderTopRightRadius = 6;
-            ghost.style.borderBottomLeftRadius = 6;
-            ghost.style.borderBottomRightRadius = 6;
+            ghost.style.opacity = GhostOpacity;
+            ghost.style.borderTopLeftRadius = GhostBorderRadius;
+            ghost.style.borderTopRightRadius = GhostBorderRadius;
+            ghost.style.borderBottomLeftRadius = GhostBorderRadius;
+            ghost.style.borderBottomRightRadius = GhostBorderRadius;
+
+            if (data.ShowAmount || moveAmount < data.Amount)
+            {
+                var label = new Label(moveAmount.ToString());
+                label.pickingMode = PickingMode.Ignore;
+                label.style.position = Position.Absolute;
+                label.style.right = 4;
+                label.style.bottom = 2;
+                label.style.fontSize = GhostLabelFontSize;
+                label.style.color = Color.white;
+                label.style.unityFontStyleAndWeight = FontStyle.Bold;
+                ghost.Add(label);
+            }
 
             return ghost;
+        }
+
+        private static DragModifier ResolveDragModifier(IPointerEvent evt)
+        {
+            if (evt.shiftKey) return DragModifier.HalfStack;
+            if (evt.ctrlKey) return DragModifier.SingleItem;
+            return DragModifier.None;
         }
     }
 }

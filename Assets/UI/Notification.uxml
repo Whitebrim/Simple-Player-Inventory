@@ -1,0 +1,8 @@
+<ui:UXML xmlns:ui="UnityEngine.UIElements">
+    <Style src="Notification.uss" />
+    <ui:VisualElement name="notification-root" class="notification-root">
+        <ui:VisualElement class="notification-container">
+            <ui:Label name="notification-label" class="notification-label" />
+        </ui:VisualElement>
+    </ui:VisualElement>
+</ui:UXML>

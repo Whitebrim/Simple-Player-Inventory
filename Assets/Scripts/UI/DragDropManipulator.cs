@@ -6,25 +6,49 @@ namespace Game.UI
 {
     public class DragDropManipulator : Manipulator
     {
+        private const float GhostSize = 60f;
+        private const float DragThreshold = 5f;
+
         private readonly VisualElement[] _slots;
         private readonly VisualElement _ghostLayer;
-        private readonly Func<int, VisualElement> _createGhost;
+        private readonly VisualElement _panelBounds;
+        private readonly Func<int, DragModifier, VisualElement> _createGhost;
 
         private VisualElement _ghost;
         private int _sourceIndex = -1;
         private int _pointerId = -1;
+        private Vector2 _startPosition;
+        private DragModifier _modifier;
+        private bool _isDragging;
 
-        public event Action<int, int> Moved;
-        public event Action<int> DroppedOutside;
+        public event Action<int, int, DragModifier> Moved;
+        public event Action<int, DragModifier> DroppedOutside;
+        public event Action<int> SlotClicked;
 
         public DragDropManipulator(
             VisualElement[] slots,
             VisualElement ghostLayer,
-            Func<int, VisualElement> createGhost)
+            VisualElement panelBounds,
+            Func<int, DragModifier, VisualElement> createGhost)
         {
             _slots = slots;
             _ghostLayer = ghostLayer;
+            _panelBounds = panelBounds;
             _createGhost = createGhost;
+        }
+
+        public void CancelDrag()
+        {
+            if (_sourceIndex < 0)
+                return;
+
+            if (_isDragging)
+                RemoveGhost();
+
+            if (_pointerId >= 0)
+                target.ReleasePointer(_pointerId);
+
+            ResetState();
         }
 
         protected override void RegisterCallbacksOnTarget()
@@ -51,19 +75,11 @@ namespace Game.UI
             if (index < 0)
                 return;
 
-            var ghost = _createGhost(index);
-
-            if (ghost == null)
-                return;
-
             _sourceIndex = index;
             _pointerId = evt.pointerId;
-            _ghost = ghost;
-
-            _ghost.style.position = Position.Absolute;
-            _ghost.pickingMode = PickingMode.Ignore;
-            PositionGhost(evt.position);
-            _ghostLayer.Add(_ghost);
+            _startPosition = evt.position;
+            _modifier = ResolveModifier(evt);
+            _isDragging = false;
 
             target.CapturePointer(evt.pointerId);
             evt.StopPropagation();
@@ -71,8 +87,28 @@ namespace Game.UI
 
         private void OnPointerMove(PointerMoveEvent evt)
         {
-            if (_ghost == null || evt.pointerId != _pointerId)
+            if (_sourceIndex < 0 || evt.pointerId != _pointerId)
                 return;
+
+            if (!_isDragging)
+            {
+                if (Vector2.Distance(evt.position, _startPosition) < DragThreshold)
+                    return;
+
+                _ghost = _createGhost(_sourceIndex, _modifier);
+
+                if (_ghost == null)
+                {
+                    target.ReleasePointer(_pointerId);
+                    ResetState();
+                    return;
+                }
+
+                _isDragging = true;
+                _ghost.style.position = Position.Absolute;
+                _ghost.pickingMode = PickingMode.Ignore;
+                _ghostLayer.Add(_ghost);
+            }
 
             PositionGhost(evt.position);
             evt.StopPropagation();
@@ -85,22 +121,28 @@ namespace Game.UI
 
             target.ReleasePointer(evt.pointerId);
 
-            if (_ghost != null)
+            int sourceIndex = _sourceIndex;
+            var modifier = _modifier;
+
+            if (!_isDragging)
             {
-                _ghost.RemoveFromHierarchy();
-                _ghost = null;
+                SlotClicked?.Invoke(sourceIndex);
+                ResetState();
+                evt.StopPropagation();
+                return;
             }
 
+            RemoveGhost();
+
             int targetIndex = FindSlotAtPosition(evt.position);
+            bool insidePanel = _panelBounds.worldBound.Contains(evt.position);
 
-            if (targetIndex >= 0 && targetIndex != _sourceIndex)
-                Moved?.Invoke(_sourceIndex, targetIndex);
-            else if (targetIndex < 0)
-                DroppedOutside?.Invoke(_sourceIndex);
+            if (targetIndex >= 0 && targetIndex != sourceIndex)
+                Moved?.Invoke(sourceIndex, targetIndex, modifier);
+            else if (!insidePanel)
+                DroppedOutside?.Invoke(sourceIndex, modifier);
 
-            _sourceIndex = -1;
-            _pointerId = -1;
-
+            ResetState();
             evt.StopPropagation();
         }
 
@@ -117,9 +159,28 @@ namespace Game.UI
 
         private void PositionGhost(Vector2 position)
         {
-            const float ghostSize = 60f;
-            _ghost.style.left = position.x - ghostSize * 0.5f;
-            _ghost.style.top = position.y - ghostSize * 0.5f;
+            _ghost.style.left = position.x - GhostSize * 0.5f;
+            _ghost.style.top = position.y - GhostSize * 0.5f;
+        }
+
+        private void RemoveGhost()
+        {
+            _ghost?.RemoveFromHierarchy();
+            _ghost = null;
+        }
+
+        private void ResetState()
+        {
+            _sourceIndex = -1;
+            _pointerId = -1;
+            _isDragging = false;
+        }
+
+        private static DragModifier ResolveModifier(PointerDownEvent evt)
+        {
+            if (evt.shiftKey) return DragModifier.HalfStack;
+            if (evt.ctrlKey) return DragModifier.SingleItem;
+            return DragModifier.None;
         }
     }
 }

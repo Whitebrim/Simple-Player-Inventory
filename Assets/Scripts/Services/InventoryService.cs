@@ -25,22 +25,20 @@ namespace Game.Services
 
         public InventorySlot GetSlot(int index) => _slots[index];
 
-        public bool TryAdd(string itemId, int amount = 1)
+        public int TryAdd(ItemData data)
         {
-            var definition = _database.GetById(itemId);
+            var definition = _database.GetById(data.ItemId);
             if (definition == null)
-                return false;
+                return 0;
 
-            if (!HasSpaceFor(itemId, amount, definition))
-                return false;
-
-            int remaining = amount;
+            int remaining = data.Amount;
+            int added = 0;
 
             if (definition.Stackable)
             {
                 for (int i = 0; i < _slots.Length && remaining > 0; i++)
                 {
-                    if (_slots[i].ItemId != itemId)
+                    if (_slots[i].ItemId != data.ItemId)
                         continue;
 
                     int space = definition.MaxStack - _slots[i].Amount;
@@ -51,6 +49,7 @@ namespace Game.Services
 
                     _slots[i].Amount += toAdd;
                     remaining -= toAdd;
+                    added += toAdd;
                     SlotChanged?.Invoke(i);
                 }
             }
@@ -58,19 +57,23 @@ namespace Game.Services
             while (remaining > 0)
             {
                 int emptyIndex = FindEmptySlot();
+                if (emptyIndex < 0)
+                    break;
+
                 int toPlace = definition.Stackable
                     ? Mathf.Min(remaining, definition.MaxStack)
                     : 1;
 
-                _slots[emptyIndex].Set(itemId, toPlace);
+                _slots[emptyIndex].Set(new ItemData(data.ItemId, toPlace));
                 remaining -= toPlace;
+                added += toPlace;
                 SlotChanged?.Invoke(emptyIndex);
             }
 
-            return true;
+            return added;
         }
 
-        public MoveResult MoveSlot(int fromIndex, int toIndex)
+        public MoveResult MoveSlot(int fromIndex, int toIndex, int amount = -1)
         {
             if (fromIndex == toIndex)
                 return new MoveResult(true, 0);
@@ -81,12 +84,18 @@ namespace Game.Services
             if (from.IsEmpty)
                 return new MoveResult(false, 0);
 
+            int moveAmount = amount < 0 ? from.Amount : Mathf.Min(amount, from.Amount);
+
             if (to.IsEmpty)
             {
-                to.Set(from.ItemId, from.Amount);
-                from.Clear();
+                to.Set(new ItemData(from.ItemId, moveAmount));
+                from.Amount -= moveAmount;
+
+                if (from.Amount <= 0)
+                    from.Clear();
+
                 NotifySlots(fromIndex, toIndex);
-                return new MoveResult(true, 0);
+                return new MoveResult(true, from.IsEmpty ? 0 : from.Amount);
             }
 
             if (from.ItemId == to.ItemId)
@@ -96,7 +105,7 @@ namespace Game.Services
                 if (definition.Stackable)
                 {
                     int space = definition.MaxStack - to.Amount;
-                    int transfer = Mathf.Min(from.Amount, space);
+                    int transfer = Mathf.Min(moveAmount, space);
 
                     to.Amount += transfer;
                     from.Amount -= transfer;
@@ -109,23 +118,25 @@ namespace Game.Services
                 }
             }
 
-            string tempId = from.ItemId;
-            int tempAmount = from.Amount;
-            from.Set(to.ItemId, to.Amount);
-            to.Set(tempId, tempAmount);
+            if (moveAmount < from.Amount)
+                return new MoveResult(false, from.Amount);
+
+            var temp = from.Data;
+            from.Set(to.Data);
+            to.Set(temp);
             NotifySlots(fromIndex, toIndex);
             return new MoveResult(true, 0);
         }
 
-        public DropData RemoveFromSlot(int slotIndex, int amount = -1)
+        public ItemData RemoveFromSlot(int slotIndex, int amount = -1)
         {
             var slot = _slots[slotIndex];
 
             if (slot.IsEmpty)
-                return new DropData(null, 0);
+                return default;
 
             int toRemove = amount < 0 ? slot.Amount : Mathf.Min(amount, slot.Amount);
-            string itemId = slot.ItemId;
+            var removed = new ItemData(slot.ItemId, toRemove);
 
             slot.Amount -= toRemove;
 
@@ -133,29 +144,7 @@ namespace Game.Services
                 slot.Clear();
 
             SlotChanged?.Invoke(slotIndex);
-            return new DropData(itemId, toRemove);
-        }
-
-        private bool HasSpaceFor(string itemId, int amount, ItemDefinition definition)
-        {
-            int available = 0;
-
-            for (int i = 0; i < _slots.Length; i++)
-            {
-                if (_slots[i].IsEmpty)
-                {
-                    available += definition.Stackable ? definition.MaxStack : 1;
-                }
-                else if (definition.Stackable && _slots[i].ItemId == itemId)
-                {
-                    available += definition.MaxStack - _slots[i].Amount;
-                }
-
-                if (available >= amount)
-                    return true;
-            }
-
-            return false;
+            return removed;
         }
 
         private int FindEmptySlot()

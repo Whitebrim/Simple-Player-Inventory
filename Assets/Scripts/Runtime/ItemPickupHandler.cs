@@ -10,14 +10,20 @@ namespace Game.Runtime
         private InputService _input;
         private IInventoryService _inventory;
         private InteractionHintUI _hint;
+        private NotificationUI _notification;
         private readonly List<WorldItem> _itemsInRange = new();
         private WorldItem _closestItem;
 
-        public void Init(InputService input, IInventoryService inventory, InteractionHintUI hint)
+        public void Init(
+            InputService input,
+            IInventoryService inventory,
+            InteractionHintUI hint,
+            NotificationUI notification)
         {
             _input = input;
             _inventory = inventory;
             _hint = hint;
+            _notification = notification;
 
             _input.InteractPressed += OnInteract;
         }
@@ -50,15 +56,26 @@ namespace Game.Runtime
             if (_closestItem == null)
                 return;
 
-            if (!_inventory.TryAdd(_closestItem.ItemId, _closestItem.Amount))
+            int added = _inventory.TryAdd(_closestItem.Data);
+
+            if (added <= 0)
+            {
+                _notification.Show("Inventory is full");
                 return;
+            }
 
-            var picked = _closestItem;
-            _itemsInRange.Remove(picked);
-            _closestItem = null;
-            _hint.Hide();
-
-            Destroy(picked.gameObject);
+            if (added >= _closestItem.Data.Amount)
+            {
+                var picked = _closestItem;
+                _itemsInRange.Remove(picked);
+                _closestItem = null;
+                _hint.Hide();
+                Destroy(picked.gameObject);
+            }
+            else
+            {
+                _closestItem.ReduceAmount(added);
+            }
         }
 
         private void UpdateClosestItem()

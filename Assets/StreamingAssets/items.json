@@ -3,7 +3,7 @@
     { "id": "stone", "name": "Stone", "color": "#888888", "stackable": true, "maxStack": 16 },
     { "id": "gem", "name": "Gem", "color": "#C840C8", "stackable": true, "maxStack": 8 },
     { "id": "sword", "name": "Sword", "color": "#7090E0", "stackable": false, "maxStack": 1 },
-    { "id": "shield", "name": "Shield", "color": "#E0A030", "stackable": false, "maxStack": 1 },
+    { "id": "shield", "name": "Shield", "color": "#E03030", "stackable": false, "maxStack": 1 },
     { "id": "potion", "name": "Potion", "color": "#30C830", "stackable": true, "maxStack": 5 },
     { "id": "key", "name": "Key", "color": "#D4A820", "stackable": true, "maxStack": 3 }
   ]

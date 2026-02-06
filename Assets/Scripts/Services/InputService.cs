@@ -12,12 +12,14 @@ namespace Game.Services
         private readonly InputAction _lookAction;
         private readonly InputAction _interactAction;
         private readonly InputAction _inventoryToggleAction;
+        private readonly InputAction _inventoryCloseAction;
 
         public Vector2 MoveDirection => _moveAction.ReadValue<Vector2>();
         public Vector2 LookDelta => _lookAction.ReadValue<Vector2>();
 
         public event Action InteractPressed;
         public event Action InventoryTogglePressed;
+        public event Action InventoryClosePressed;
 
         public InputService()
         {
@@ -41,8 +43,12 @@ namespace Game.Services
             _inventoryToggleAction = _uiMap.AddAction("InventoryToggle", InputActionType.Button);
             _inventoryToggleAction.AddBinding("<Keyboard>/tab");
 
+            _inventoryCloseAction = _uiMap.AddAction("InventoryClose", InputActionType.Button);
+            _inventoryCloseAction.AddBinding("<Keyboard>/escape");
+
             _interactAction.performed += OnInteract;
             _inventoryToggleAction.performed += OnInventoryToggle;
+            _inventoryCloseAction.performed += OnInventoryClose;
 
             _uiMap.Enable();
         }
@@ -67,6 +73,7 @@ namespace Game.Services
         {
             _interactAction.performed -= OnInteract;
             _inventoryToggleAction.performed -= OnInventoryToggle;
+            _inventoryCloseAction.performed -= OnInventoryClose;
 
             _gameplayMap.Disable();
             _uiMap.Disable();
@@ -74,14 +81,8 @@ namespace Game.Services
             _uiMap.Dispose();
         }
 
-        private void OnInteract(InputAction.CallbackContext ctx)
-        {
-            InteractPressed?.Invoke();
-        }
-
-        private void OnInventoryToggle(InputAction.CallbackContext ctx)
-        {
-            InventoryTogglePressed?.Invoke();
-        }
+        private void OnInteract(InputAction.CallbackContext ctx) => InteractPressed?.Invoke();
+        private void OnInventoryToggle(InputAction.CallbackContext ctx) => InventoryTogglePressed?.Invoke();
+        private void OnInventoryClose(InputAction.CallbackContext ctx) => InventoryClosePressed?.Invoke();
     }
 }

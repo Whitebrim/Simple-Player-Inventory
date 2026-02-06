@@ -6,6 +6,8 @@ namespace Game.Runtime
     [RequireComponent(typeof(CharacterController))]
     public class PlayerController : MonoBehaviour
     {
+        private const float GroundedPullDown = -2f;
+
         [SerializeField] private Transform _cameraTarget;
         [SerializeField] private Transform _cameraTransform;
         [SerializeField] private float _moveSpeed = 5f;
@@ -53,7 +55,7 @@ namespace Game.Runtime
             Vector3 horizontal = (forward * moveInput.y + right * moveInput.x) * _moveSpeed;
 
             if (_characterController.isGrounded && _verticalVelocity < 0f)
-                _verticalVelocity = -2f;
+                _verticalVelocity = GroundedPullDown;
             else
                 _verticalVelocity += Physics.gravity.y * Time.deltaTime;
 

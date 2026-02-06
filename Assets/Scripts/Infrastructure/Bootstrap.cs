@@ -13,6 +13,7 @@ namespace Game.Infrastructure
         [SerializeField] private ItemPickupHandler _itemPickupHandler;
         [SerializeField] private UIDocument _inventoryDocument;
         [SerializeField] private UIDocument _hintDocument;
+        [SerializeField] private UIDocument _notificationDocument;
         [SerializeField] private WorldItem _worldItemPrefab;
 
         private InputService _inputService;
@@ -32,22 +33,18 @@ namespace Game.Infrastructure
             var inventoryService = new InventoryService(itemDatabase);
             container.Register<IInventoryService>(inventoryService);
 
-            var itemDropper = new ItemDropper(itemDatabase, _worldItemPrefab);
+            var itemDropper = new ItemDropper(itemDatabase, _worldItemPrefab, _playerController.transform);
 
             _playerController.Init(_inputService);
 
             var hintUI = new InteractionHintUI(_hintDocument);
-            _itemPickupHandler.Init(_inputService, inventoryService, hintUI);
+            var notificationUI = new NotificationUI(_notificationDocument);
+            _itemPickupHandler.Init(_inputService, inventoryService, hintUI, notificationUI);
 
             var viewModel = new InventoryViewModel(inventoryService, itemDatabase, _inputService);
             var inventoryView = new InventoryView(_inventoryDocument, viewModel);
 
-            viewModel.DropRequested += (itemId, amount) =>
-            {
-                Vector3 dropPosition = _playerController.transform.position
-                                       + _playerController.transform.forward * 2f;
-                itemDropper.Drop(itemId, amount, dropPosition);
-            };
+            viewModel.DropRequested += data => itemDropper.Drop(data);
 
             foreach (var worldItem in FindObjectsByType<WorldItem>(FindObjectsSortMode.None))
                 worldItem.Init(itemDatabase);

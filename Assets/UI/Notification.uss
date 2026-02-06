@@ -1,0 +1,19 @@
+.notification-root {
+    flex-grow: 1;
+    align-items: center;
+    justify-content: flex-start;
+    padding-top: 80px;
+}
+
+.notification-container {
+    background-color: rgba(140, 30, 30, 0.85);
+    padding: 10px 28px;
+    border-radius: 6px;
+}
+
+.notification-label {
+    font-size: 18px;
+    color: rgb(255, 230, 230);
+    -unity-text-align: middle-center;
+    -unity-font-style: bold;
+}

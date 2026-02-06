@@ -4,6 +4,10 @@
         <ui:VisualElement name="inventory-panel" class="inventory-panel">
             <ui:Label name="inventory-title" text="Inventory" class="inventory-title" />
             <ui:VisualElement name="grid-container" class="grid-container" />
+            <ui:VisualElement name="detail-panel" class="detail-panel">
+                <ui:Label name="detail-name" class="detail-name" />
+                <ui:Label name="detail-amount" class="detail-amount" />
+            </ui:VisualElement>
         </ui:VisualElement>
     </ui:VisualElement>
 </ui:UXML>

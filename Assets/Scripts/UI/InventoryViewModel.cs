@@ -1,5 +1,7 @@
 using System;
+using Game.Data;
 using Game.Services;
+using UnityEngine;
 
 namespace Game.UI
 {
@@ -8,13 +10,16 @@ namespace Game.UI
         private readonly IInventoryService _inventory;
         private readonly IItemDatabase _database;
         private readonly InputService _input;
+        private int _selectedSlotIndex = -1;
 
         public int SlotCount => _inventory.SlotCount;
         public bool IsOpen { get; private set; }
 
         public event Action<int, SlotViewData> SlotUpdated;
         public event Action<bool> VisibilityChanged;
-        public event Action<string, int> DropRequested;
+        public event Action<ItemData> DropRequested;
+        public event Action<SlotViewData> DetailShown;
+        public event Action DetailHidden;
 
         public InventoryViewModel(IInventoryService inventory, IItemDatabase database, InputService input)
         {
@@ -24,6 +29,7 @@ namespace Game.UI
 
             _inventory.SlotChanged += OnSlotChanged;
             _input.InventoryTogglePressed += ToggleVisibility;
+            _input.InventoryClosePressed += CloseInventory;
         }
 
         public SlotViewData GetSlotData(int index)
@@ -39,33 +45,101 @@ namespace Game.UI
                 definition.Color,
                 definition.Name,
                 slot.Amount,
+                definition.MaxStack,
+                definition.Stackable,
                 definition.Stackable && slot.Amount > 1
             );
         }
 
-        public void RequestMove(int fromIndex, int toIndex)
+        public int GetMoveAmount(int slotIndex, DragModifier modifier)
         {
-            _inventory.MoveSlot(fromIndex, toIndex);
+            var slot = _inventory.GetSlot(slotIndex);
+
+            if (slot.IsEmpty)
+                return 0;
+
+            return modifier switch
+            {
+                DragModifier.HalfStack => Mathf.Max(1, slot.Amount / 2),
+                DragModifier.SingleItem => 1,
+                _ => slot.Amount
+            };
         }
 
-        public void RequestDrop(int slotIndex)
+        public void RequestMove(int fromIndex, int toIndex, int amount)
         {
-            var data = _inventory.RemoveFromSlot(slotIndex);
+            _inventory.MoveSlot(fromIndex, toIndex, amount);
+        }
+
+        public void RequestDrop(int slotIndex, int amount)
+        {
+            var data = _inventory.RemoveFromSlot(slotIndex, amount);
 
             if (!data.IsEmpty)
-                DropRequested?.Invoke(data.ItemId, data.Amount);
+                DropRequested?.Invoke(data);
+        }
+
+        public void SelectSlot(int index)
+        {
+            if (index == _selectedSlotIndex)
+            {
+                DeselectSlot();
+                return;
+            }
+
+            var slot = _inventory.GetSlot(index);
+
+            if (slot.IsEmpty)
+            {
+                DeselectSlot();
+                return;
+            }
+
+            _selectedSlotIndex = index;
+            DetailShown?.Invoke(GetSlotData(index));
+        }
+
+        public void DeselectSlot()
+        {
+            _selectedSlotIndex = -1;
+            DetailHidden?.Invoke();
         }
 
         private void ToggleVisibility()
         {
-            IsOpen = !IsOpen;
-            _input.SetGameplayActive(!IsOpen);
-            VisibilityChanged?.Invoke(IsOpen);
+            SetOpen(!IsOpen);
+        }
+
+        private void CloseInventory()
+        {
+            if (IsOpen)
+                SetOpen(false);
+        }
+
+        private void SetOpen(bool open)
+        {
+            IsOpen = open;
+            _input.SetGameplayActive(!open);
+
+            if (!open)
+                DeselectSlot();
+
+            VisibilityChanged?.Invoke(open);
         }
 
         private void OnSlotChanged(int index)
         {
             SlotUpdated?.Invoke(index, GetSlotData(index));
+
+            if (index != _selectedSlotIndex)
+                return;
+
+            var slot = _inventory.GetSlot(index);
+
+            if (slot.IsEmpty)
+                DeselectSlot();
+            else
+                DetailShown?.Invoke(GetSlotData(index));
         }
     }
 }

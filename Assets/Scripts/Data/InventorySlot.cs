@@ -6,10 +6,12 @@ namespace Game.Data
         public int Amount { get; set; }
         public bool IsEmpty => ItemId == null;
 
-        public void Set(string itemId, int amount)
+        public ItemData Data => new(ItemId, Amount);
+
+        public void Set(ItemData data)
         {
-            ItemId = itemId;
-            Amount = amount;
+            ItemId = data.ItemId;
+            Amount = data.Amount;
         }
 
         public void Clear()
